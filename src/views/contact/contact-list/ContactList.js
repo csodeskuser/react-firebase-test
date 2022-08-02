@@ -2,20 +2,19 @@ import React, { useState, useEffect } from 'react'
 import { CButton, CCard, CCardBody, CCol, CTable, CRow} from '@coreui/react'
 import db from "../../../firebaseConfig";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 const ContactList = () => {
   const navigation = useNavigate();
   const [contacts, setContact] = useState([]);
 
   useEffect(() => {
-    /* Get All Comtect List */
-    db.collection("contacts").onSnapshot((snapshot) => {
-        const conteactsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          data: doc.data(),
-        }))
-        setContact(conteactsData)
-    });
+    axios.get(`${process.env.REACT_APP_BASE_URL}getContacts`).then((resp)=>{
+      console.log(resp.data);
+      if(resp.data.status === true) {
+        setContact(resp.data.result);
+      }
+    })
   }, []);
 
   /* Delete Single Contact */
@@ -70,10 +69,10 @@ const ContactList = () => {
     contacts.map((resp,index)=>{
         items.push({
             id: (index+1),
-            name: `${resp.data.first_name} ${resp.data.last_name}`,
-            address: resp.data.address,
-            email: resp.data.email,
-            phone: resp.data.phone_number,
+            name: `${resp.first_name} ${resp.last_name}`,
+            address: resp.address,
+            email: resp.email,
+            phone: resp.phone_number,
             action: <React.Fragment><CButton onClick={()=>editContact(resp.id)} color="info" className="mb-3">Edit</CButton> &nbsp; <CButton onClick={()=>deleteContact(resp.id)} color="danger" type="submit" className="mb-3">Delete</CButton></React.Fragment>,
           _cellProps: { id: { scope: 'row' } },
         });
