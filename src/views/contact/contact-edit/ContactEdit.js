@@ -3,12 +3,12 @@ import {CButton, CCard, CCardBody, CCol, CForm, CFormInput, CFormLabel, CFormTex
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useForm } from 'react-hook-form';
-import db from "../../../firebaseConfig";
+import axios from 'axios';
 
 const ContactEdit = () => {
   /* URl Params */
   let { id } = useParams();
-
+  const [disabled,setDisabled] = useState(false);
   /* State Seclaration */
   const [fistname,setFirstname] = useState("");
   const [lastname,setLastname] = useState("");
@@ -21,23 +21,27 @@ const ContactEdit = () => {
 
   /* Get Single Contact For Edit Form */
   useEffect(()=>{
-    db.collection('contacts')
-    .doc(id)
-    .onSnapshot(documentSnapshot => {
-      setFirstname(documentSnapshot.data().first_name);
-      setLastname(documentSnapshot.data().last_name);
-      setAddress(documentSnapshot.data().address);
-      setEmail(documentSnapshot.data().email);
-      setPhoneNumber(documentSnapshot.data().phone_number);
-    });
+    axios.get(`${process.env.REACT_APP_BASE_URL}getContact/${id}`).then((resp)=>{
+      if(resp.data.status === true) {
+        setFirstname(resp.data.result.first_name);
+        setLastname(resp.data.result.last_name);
+        setAddress(resp.data.result.address);
+        setEmail(resp.data.result.email);
+        setPhoneNumber(resp.data.result.phone_number);
+      }
+    })
+
   })
 
   /* Update Contect */
   const onSubmit = data => { 
-    console.log("Test",data);
-    db.collection("contacts").doc(id).update(data).then(()=>{
+    setDisabled(true);
+    axios.post(`${process.env.REACT_APP_BASE_URL}updateContact/${id}`,data).then((resp)=>{
+      setDisabled(false);
+      if(resp.data.status === true) {
         navigation('/contect-list');
-    });
+      }
+    })
   }
 
   /* Form Error Variable */
@@ -69,7 +73,7 @@ const ContactEdit = () => {
                     <CFormInput type="text" id="exampleFormControlInput1"  placeholder="Phone Number" {...setValue('phone_number', phone_number )}  {...register("phone_number", {required: true, maxLength: 80})} />
                 </div>
                 <div className="mb-3">
-                    <CButton type="submit" className="mb-3">Update</CButton>
+                    <CButton type="submit" disabled={disabled} className="mb-3">Update</CButton>
                 </div>
             </CForm>
           </CCardBody>

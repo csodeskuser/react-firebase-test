@@ -1,26 +1,31 @@
 import React, { useState, useEffect } from 'react'
 import { CButton, CCard, CCardBody, CCol, CTable, CRow} from '@coreui/react'
-import db from "../../../firebaseConfig";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
 const ContactList = () => {
   const navigation = useNavigate();
   const [contacts, setContact] = useState([]);
-
-  useEffect(() => {
+  const [disabled,setDisabled] = useState(false);
+  const getList=()=>{
     axios.get(`${process.env.REACT_APP_BASE_URL}getContacts`).then((resp)=>{
-      console.log(resp.data);
       if(resp.data.status === true) {
         setContact(resp.data.result);
       }
     })
+  }
+  useEffect(() => {
+    getList();
   }, []);
-
+  
   /* Delete Single Contact */
   const deleteContact=(id)=>{
     if(window.confirm("Do You Want To Delete This")) {
-        db.collection("contacts").doc(id).delete();
+        setDisabled(true);
+        axios.get(`${process.env.REACT_APP_BASE_URL}deleteContact/${id}`).then((resp)=>{
+          setDisabled(false);
+          getList();
+        })
     }
   }
 
@@ -73,7 +78,7 @@ const ContactList = () => {
             address: resp.address,
             email: resp.email,
             phone: resp.phone_number,
-            action: <React.Fragment><CButton onClick={()=>editContact(resp.id)} color="info" className="mb-3">Edit</CButton> &nbsp; <CButton onClick={()=>deleteContact(resp.id)} color="danger" type="submit" className="mb-3">Delete</CButton></React.Fragment>,
+            action: <React.Fragment><CButton onClick={()=>editContact(resp.id)}  color="info" className="mb-3">Edit</CButton> &nbsp; <CButton disabled={disabled} onClick={()=>deleteContact(resp.id)} color="danger" type="submit" className="mb-3">Delete</CButton></React.Fragment>,
           _cellProps: { id: { scope: 'row' } },
         });
         return 1;

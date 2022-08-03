@@ -1,18 +1,23 @@
-import React from 'react'
+import React,{useState} from 'react'
 import {CButton, CCard, CCardBody, CCol, CForm, CFormInput, CFormLabel, CFormTextarea, CRow} from '@coreui/react'
 import { useNavigate } from "react-router-dom";
 import { useForm } from 'react-hook-form';
-import db from "../../../firebaseConfig";
+import axios from 'axios';
 
 const ContactForm = () => {
   const { register, handleSubmit, formState: { errors } } = useForm();
+  const [disabled,setDisabled] = useState(false);
   const navigation = useNavigate();
 
   /* For Create New Contact */
   const onSubmit = data => { 
-    db.collection("contacts").add(data).then(()=>{
+    setDisabled(true);
+    axios.post(`${process.env.REACT_APP_BASE_URL}createContacts`,data).then((resp)=>{
+      setDisabled(false);
+      if(resp.data.status === true) {
         navigation('/contect-list');
-    });
+      }
+    })
   }
 
   /* Form Error Variable */
@@ -44,7 +49,7 @@ const ContactForm = () => {
                     <CFormInput type="text" id="exampleFormControlInput1" placeholder="Phone Number"  {...register("phone_number", {required: true, maxLength: 80})} />
                 </div>
                 <div className="mb-3">
-                    <CButton type="submit" className="mb-3">Submit</CButton>
+                    <CButton disabled={disabled} type="submit" className="mb-3">Submit</CButton>
                 </div>
             </CForm>
           </CCardBody>
